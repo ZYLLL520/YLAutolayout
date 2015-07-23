@@ -10,6 +10,12 @@ import UIKit
 
 class YLDemoListTableViewController: UITableViewController {
 
+    enum myEnum {
+        
+        case haha /// 测试
+        case hehe
+    }
+    
     
     
     private lazy var demoList: [[String: String]] = {

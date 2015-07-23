@@ -9,33 +9,34 @@
 import UIKit
 
 /*
-top       1
-bottom    2
-left      3
-right     4
-center    5
+  top       1
+  bottom    2
+  left      3
+  right     4
+  center    5
 */
 
 public enum yl_AlignType: Int {
-    case LeftTop        = 31        // 左上
-    case LeftCenter     = 35        // 左中
-    case LeftBottom     = 32        // 左下
     
-    case RightTop       = 41        // 右上
-    case RightCenter    = 45        // 右中
-    case RightBottom    = 42        // 右下
+    case LeftTop        = 31        /// 左上
+    case LeftCenter     = 35        /// 左中
+    case LeftBottom     = 32        /// 左下
     
-    case CenterTop      = 51        // 中上
-    case CenterCenter   = 55        // 中中
-    case CenterBottom   = 52        // 中下
+    case RightTop       = 41        /// 右上
+    case RightCenter    = 45        /// 右中
+    case RightBottom    = 42        /// 右下
     
-    case TopLeft        = 13        // 上左
-    case TopCenter      = 15        // 上中
-    case TopRight       = 14        // 上右
+    case CenterTop      = 51        /// 中上
+    case CenterCenter   = 55        /// 中中
+    case CenterBottom   = 52        /// 中下
     
-    case BottomLeft     = 23        // 下左
-    case BottomCenter   = 25        // 下中
-    case BottomRight    = 24        // 下右
+    case TopLeft        = 13        /// 上左
+    case TopCenter      = 15        /// 上中
+    case TopRight       = 14        /// 上右
+    
+    case BottomLeft     = 23        /// 下左
+    case BottomCenter   = 25        /// 下中
+    case BottomRight    = 24        /// 下右
     
     private func typeToArray() -> [NSLayoutAttribute] { // 枚举类型转类型数组
         var cons = [NSLayoutAttribute]()
@@ -67,6 +68,7 @@ public enum yl_AlignType: Int {
 }
 
 extension UIView {
+    
     // MARK: - Add Constraint
     
     ///  添加两个控件之间的所需的4种约束
@@ -96,7 +98,7 @@ extension UIView {
     ///
     ///  :returns: 对应的约束
     public func yl_MakeDoubleConstraint(attributes attributes: yl_AlignType, referView: UIView?, offset: CGPoint?) -> [NSLayoutConstraint] {
-        assert(superview != nil, "Control is not added to the superView")
+        assert(superview != nil, "View's superview must not be nil")
         if referView != nil && !self.isDescendantOfView(referView!) {
             assert(referView!.superview != nil, "referView should add to the superView")
         }
@@ -126,7 +128,7 @@ extension UIView {
     ///  :returns: 对应的约束
     public func yl_MakeConstraint(attribute attribute: NSLayoutAttribute, referView: UIView?, constant: CGFloat?) -> [NSLayoutConstraint] {
         
-        assert(superview != nil, "Control is not added to the superView")
+        assert(superview != nil, "View's superview must not be nil")
         if referView != nil && !self.isDescendantOfView(referView!) {
             assert(referView!.superview != nil, "referView should add to the superView")
         }
@@ -169,7 +171,7 @@ extension UIView {
     ///
     ///  :returns: 对应的约束
     public func yl_MakeSizeEqual(referView: UIView?) -> [NSLayoutConstraint] {
-        assert(superview != nil, "Control is not added to the superView")
+        assert(superview != nil, "View's superview must not be nil")
         if referView != nil && !self.isDescendantOfView(referView!) { // 同一层级
             assert(referView!.superview != nil, "referView should add to the superView")
         }
@@ -191,7 +193,7 @@ extension UIView {
     ///
     ///  - parameter insets: 间距 默认为UIEdgeInsetsZero
     public func yl_MakeFill(insets: UIEdgeInsets = UIEdgeInsetsZero) -> [NSLayoutConstraint] {
-        assert(superview != nil, "Control is not added to the superView")
+        assert(superview != nil, "View's superview must not be nil")
         
         translatesAutoresizingMaskIntoConstraints = false
         var cons = [NSLayoutConstraint]()
@@ -262,7 +264,7 @@ extension UIView {
         return cons
     }
     
-    // MARK: - Search or clear Constraint
+    // MARK: - Search、update or clear Constraint
     
     ///  从约束数组中查找指定 attribute 的约束
     ///
@@ -279,10 +281,28 @@ extension UIView {
         return nil
     }
     
-    // TODO: clear constraint
-    //    public func yl_ClearConstraint() {
-    //
-    //    }
+    ///  删除控件的所有布局
+    public func yl_ClearConstraint() {
+        let cons = p_allConstraints()
+        superview!.removeConstraints(cons)
+    }
+    
+    ///  更新控件的指定约束
+    ///
+    ///  :param: attribute    约束类型
+    ///  :param: constant     约束值
+    ///  :param: isNeedLayout 是否立刻更新视图
+    public func yl_UpdateConstraint(attribute attribute: NSLayoutAttribute, constant: CGFloat, isNeedLayout: Bool) {
+        if let constraint = p_SearchConstraint(attribute: attribute) {
+            constraint.constant = constant
+        } else {
+            assert(true, "view must add this constraint before update constraint")
+        }
+        
+        if isNeedLayout {
+            layoutIfNeeded()
+        }
+    }
     
     // MARK: - private func
     
@@ -295,6 +315,28 @@ extension UIView {
         self.superview!.addConstraint(con)
         
         return [con]
+    }
+    
+    private func p_allConstraints() -> [NSLayoutConstraint] {
+        assert(superview != nil, "View's superview must not be nil")
+        var cons = [NSLayoutConstraint]()
+        for con in superview!.constraints {
+            if con.firstItem as! NSObject == self {
+                cons .append(con)
+            }
+        }
+        return cons
+    }
+    
+    // TODO: 查询约束有待测试！
+    private func p_SearchConstraint(attribute attribute: NSLayoutAttribute) -> NSLayoutConstraint? {
+        let constraints = p_allConstraints()
+        for constraint in constraints {
+            if constraint.firstItem as! NSObject == self && constraint.firstAttribute == attribute {
+                return constraint
+            }
+        }
+        return nil
     }
     
 }
